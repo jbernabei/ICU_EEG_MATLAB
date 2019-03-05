@@ -1,4 +1,4 @@
-function [feats] = get_Features(values)
+function [feats] = get_Features(values,sampleRate)
 
 %   get_Features.m
 %   
@@ -29,17 +29,48 @@ function [feats] = get_Features(values)
 % Get number of channels
 channelNo = size(values,2);
 
+% Do filtering
+[b,a] = besself(5,[0.5 40],'bandpass');
+[bz, az] = impinvar(b,a,256);
+values=filter(bz,az,values);
+
+order = 4;
+low1 = 0.5;
+high = 50;
+sampling = 256;
+fs = 256;
+
 % Recalculate a copy of data that has mean subtracted
 no_offset_data = values - mean(values,2);
 
 % Calculate root mean square of data 
 valuesRms = no_offset_data./rms(no_offset_data,2);
 
+%% Filter for theta band
+fcutlow1=4;   %low cut frequency in kHz
+fcuthigh1=8;   %high cut frequency in kHz
+p1 = bandpower(valuesRms,sampleRate,[fcutlow1 fcuthigh1]);
+
+%% Filter for alpha band
+fcutlow2=8;   %low cut frequency in kHz    
+fcuthigh2=12;
+p2 = bandpower(valuesRms,sampleRate,[fcutlow2 fcuthigh2]);
+
+%% Filter for beta band
+fcutlow3=12;   %low cut frequency in kHz
+fcuthigh3=25;   %high cut frequency in kHz
+p3 = bandpower(valuesRms,sampleRate,[fcutlow3 fcuthigh3]);
+
+%% Filter for 25-40 band
+fcutlow4=25;   %low cut frequency in kHz
+fcuthigh4=40;   %high cut frequency in kHz
+p4 = bandpower(valuesRms,sampleRate,[fcutlow4 fcuthigh4]);
+
 %% Calculate features based on channel correlations
-matrix = correlation_Matrix(valuesRms);
-cVector = reshape(matrix, 1, []);
-varCM = var(cVector);
-avgCM = mean(cVector);
+% matrix = correlation_Matrix(valuesRms);
+% cVector = reshape(matrix, 1, []);
+% varCM = var(cVector);
+% avgCM = mean(cVector);
 %upperCM = cVector(cVector>=(avgCM+sqrt(varCM)));
 %lowerCM = cVector(cVector<=(avgCM-sqrt(varCM)));
 
@@ -60,6 +91,9 @@ avgLL = mean(llfn);
 %upperLL = llfn(PSDVector>=(avgLL+sqrt(varLL)));
 %lowerLL = llfn(PSDVector<=(avgLL-sqrt(varLL)));
 
+%% Calculate wavelet entropy
+Entropy = wentropy(valuesRms,'shannon');
+
 %% Return vector of features
-feats = [varCM avgCM  meanmaxPSD varPSD avgPSD meanmaxLL varLL avgLL];
+feats = [p1 p2 p3 p4 meanmaxLL varLL avgLL Entropy];
 end
