@@ -64,7 +64,10 @@ for i = 1:num_patients
     end
 end
 
-data_clip.data = data_with_NaN.data
+for i = 1:num_patients
+    data_clip(i).data = data_with_NaN(i).data((start_ind{i} + 0.5*sampleRate*60):(start_ind{i} + 15.5*sampleRate*60),:);
+end
+
 
 
 %% Calculate features
