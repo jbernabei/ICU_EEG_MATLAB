@@ -42,7 +42,6 @@ for i = 1:num_patients
 end
 
 %% Calculate features
-clear baseline_features
 for i = 1:num_patients
     i
     if sum(sum(isnan(data_clip(i).data)))<36000
@@ -50,7 +49,14 @@ for i = 1:num_patients
         for j = 1:(100)
             baseline_features(i).data(:,j) = get_Features(data_clip_rm(:,((j-1)*sampleRate+1):(sampleRate*j)), sampleRate);
         end
+        mean_features(i,:) = mean(baseline_features(i).data,1);
     end
 end
 
 %% Cluster
+[coeff,score,latent,tsquared,explained,mu] = pca(mean_features);
+pc1_all = score(:,1)
+pc2_all = score(:,2)
+
+figure(8);clf
+plot(pc1_all,pc2_all,'ko')
