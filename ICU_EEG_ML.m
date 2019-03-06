@@ -60,7 +60,7 @@ for i = 1:num_patients
 end
 
 %% Cluster
-[coeff,score,latent,tsquared,explained,mu] = pca(mean_features);
+[coeff,score,latent,tsquared,explained,mu] = pca(zscore(mean_features));
 pc1_all = score(:,1);
 pc2_all = score(:,2);
 
