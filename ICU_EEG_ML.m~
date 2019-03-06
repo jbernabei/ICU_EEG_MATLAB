@@ -55,7 +55,7 @@ for i = 1:num_patients
             baseline_features(i).data(:,h) = get_Features(data_clip_rm(:,((j-1)*sampleRate+1):(sampleRate*j)), sampleRate);
         end
         q = q+1
-        mean_features(q,:) = mean(baseline_features(i).data,2);
+        mean_features(q,:) = mean(baseline_features(i).data,1);
     end
 end
 

@@ -56,12 +56,12 @@ p3 = mean(bandpower(values,sampleRate,[fcutlow3 fcuthigh3]));
 %% Filter for 25-40 Hz band
 fcutlow4=25;   %low cut frequency in kHz
 fcuthigh4=40;   %high cut frequency in kHz
-p4 = mean(bandpower(values,sampleRate,[fcutlow4 fcuthigh4]));
+%p4 = mean(bandpower(values,sampleRate,[fcutlow4 fcuthigh4]));
 
 %% Calculate features based on channel correlations
 %matrix = correlation_Matrix(values);
 %cVector = reshape(matrix, 1, []);
-% varCM = var(cVector);
+%varCM = var(cVector);
 %avgCM = mean(cVector);
 %upperCM = cVector(cVector>=(avgCM+sqrt(varCM)));
 %lowerCM = cVector(cVector<=(avgCM-sqrt(varCM)));
@@ -83,8 +83,8 @@ avgLL = mean(llfn);
 %lowerLL = llfn(PSDVector<=(avgLL-sqrt(varLL)));
 
 %% Calculate wavelet entropy
-% Entropy = wentropy(values,'shannon');
+Entropy = wentropy(values,'shannon');
 
 %% Return vector of features
-feats = [p1 p2 p3 p4 avgPSD meanmaxLL avgLL];
+feats = [p1 p2 p3 avgPSD meanmaxLL avgLL Entropy];
 end
