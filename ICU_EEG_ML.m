@@ -38,7 +38,6 @@ end
 for i = 1:num_patients
     session = IEEGSession(all_annots(i).patient, iEEGid, iEEGpw); % Initiate IEEG session
     sampleRate = session.data.sampleRate; % Sampling rate
-    data_clip(i).data = session.data.getvalues(1:(15*60*sampleRate),channels)';
     %data_clip(i).data = session.data.getvalues(1:(15*60*sampleRate),channels);
     data_with_NaN(i).data = session.data.getvalues(1:(80*60*sampleRate),channels);
 end
