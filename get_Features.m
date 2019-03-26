@@ -30,13 +30,13 @@ function [feats] = get_Features(values,sampleRate)
 channelNo = size(values,2);
 
 % Do filtering
-order = 5;
+order = 4; % Changed this from 5 to 4
 low_freq = 0.5; % Hz
 high_freq = 50; % Hz
 
 [b,a] = besself(order,[low_freq high_freq],'bandpass');
 [bz, az] = impinvar(b,a,sampleRate);
-values=filter(bz,az,values);
+values=filter(bz,az,values); % This is generating almost 50% Nans
 
 %% Theta band power
 fcutlow1=4;   %low cut frequency in Hz
