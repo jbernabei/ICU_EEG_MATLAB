@@ -22,7 +22,7 @@ function features = MovingWinFeats(x, fs, winLen, winDisp, featFn)
     while n <= numWins
         values = x(firstSample:(firstSample+samplesWin-1)); % determine signal values for window
 
-        res = featFn(values);
+        res = featFn(values,fs);
         features = [features res']; % calculate features for window
 
         n = n+1; % advance window counter
