@@ -7,12 +7,12 @@ iEEGpw = 'cpa_ieeglogin.bin'; % Change this for different user
 channels = [3 4 5 9 10 11 12 13 14 20 21 23 24 27 31 32 33 34];
 num_patients = size(all_annots,2); % Get number of patients
 
-window_Length = 10;
-window_Disp = 5;
-Num_patients = 1;
+window_Length = 2;
+window_Disp = 1;
+Num_patients = 15;
 
 %% Get intervals for all patients 
-for i = 3:3
+for i = 1:Num_patients
     session = IEEGSession(all_annots(i).patient, iEEGid, iEEGpw); % Initiate IEEG session
     sampleRate = session.data.sampleRate; % Sampling rate
     sz_num = length(all_annots(i).sz_start); % Get number of seizures
@@ -53,42 +53,33 @@ for i = 3:3
                 start_ind{i} = ind + 1;
             end
         end
-        if (sample_counter == 15*60*sampleRate)
+        if (sample_counter == 60*60*sampleRate)
             found_full_15 = 1;
         end
         ind = ind + 1;
     end
     
-    chan_Feat = [];
-    data_clip(i).data = data_with_NaN(i).data((start_ind{i} + 0.5*sampleRate*60):end - 10*window_Length,:);
+    data_clip(i).data = data_with_NaN(i).data((start_ind{i} + 0.5*sampleRate*60):(start_ind{i} + 15.5*sampleRate*60),:);
     data_clip(i).data = rmmissing(data_clip(i).data);
-    for chan = 1:18
-        chan
-        if (isempty(chan_Feat))
-            chan_Feat = MovingWinFeats(data_clip(i).data(:,chan), sampleRate, window_Length, window_Disp, @get_Features);
-        end
-        chan_Feat =  chan_Feat + MovingWinFeats(data_clip(i).data(:,chan), sampleRate, window_Length, window_Disp, @get_Features);
-    end
-    chan_Feat = chan_Feat./18;
-    feats{i} = chan_Feat;
+    feats{i} = MovingWinFeats(data_clip(i).data, sampleRate, window_Length, window_Disp, @get_Features);
     
     labelSeizureVector{i} = zeros([1,size(feats{i},2)]);
     for k = 1:size(labelSeizureVector{i},2)
-        if(sum(intervals_SZ(i).data == (start_ind{i} + window_Disp*k*sampleRate+floor(window_Length/2))) > 0)
+        if(sum(intervals_SZ(i).data == k*sampleRate) > 0)
             labelSeizureVector{i}(k) = 1;
         end
     end
     
 end
 
-%for i = 1:5
+for i = 1:5
     %session = IEEGSession(all_annots(i).patient, iEEGid, iEEGpw); % Initiate IEEG session
     %sampleRate = session.data.sampleRate; % Sampling rate
     %data_clip(i).data = session.data.getvalues(1:(15*60*sampleRate),channels);
     
-%end
+end
 
-%for i = 1:5
+for i = 1:5
 %     sample_counter = 0;
 %     start_ind{i} = 1;
 %     ind = 1;
@@ -108,22 +99,22 @@ end
 %         end
 %         ind = ind + 1;
 %     end
-%end
-%for i = 1:5
+end
+for i = 1:5
 %     data_clip(i).data = data_with_NaN(i).data((start_ind{i} + 0.5*sampleRate*60):(start_ind{i} + 15.5*sampleRate*60),:);
 %     data_clip(i).data = rmmissing(data_clip(i).data);
 %     feats{i} = MovingWinFeats(data_clip(i).data, sampleRate, window_Length, window_Disp, @get_Features);
-%end
+end
 
 % Now we need to generate the labels
-%for i = 1:5
+for i = 1:5
 %     labelSeizureVector{i} = zeros([1,size(feats{i},2)]);
 %     for k = 1:size(labelSeizureVector{i},2)
 %         if(sum(intervals_SZ(i).data == k*sampleRate) > 0)
 %             labelSeizureVector{i}(k) = 1;
 %         end
 %     end
-%end
+end
 
 feats
 labelSeizureVector

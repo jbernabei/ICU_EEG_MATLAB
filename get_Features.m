@@ -76,9 +76,9 @@ avgPSD = mean(PSDVector);
 %lowerPSD = PSDVector(PSDVector<=(avgPSD-sqrt(varPSD)));
 
 %% Calculate features based on linelength
-llfn = mean(line_Length(values));
-meanmaxLL = max(llfn);
-avgLL = mean(llfn);
+%llfn = mean(line_Length(values));
+%meanmaxLL = max(llfn);
+%avgLL = mean(llfn);
 %upperLL = llfn(PSDVector>=(avgLL+sqrt(varLL)));
 %lowerLL = llfn(PSDVector<=(avgLL-sqrt(varLL)));
 
@@ -86,5 +86,5 @@ avgLL = mean(llfn);
 Entropy = wentropy(values,'shannon');
 
 %% Return vector of features
-feats = [p1 p2 p3 avgPSD meanmaxLL avgLL Entropy];
+feats = [p1 p2 p3 avgPSD Entropy];
 end

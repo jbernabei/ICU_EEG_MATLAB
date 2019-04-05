@@ -15,7 +15,7 @@ Ytest = Y(indices);
 X(:,indices) = [];
 Y(indices) = [];
 
-Mdl = TreeBagger(300,X',Y);
+Mdl = TreeBagger(300,X',Y, 'Cost',[0 0.1; 0.9, 0]);
 
 Yguess_cell = Mdl.predict(Xtest');
 

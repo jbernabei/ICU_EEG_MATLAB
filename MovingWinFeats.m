@@ -19,9 +19,8 @@ function features = MovingWinFeats(x, fs, winLen, winDisp, featFn)
     n=1; % initialize window counting
     firstSample = 1; % initialize sample counting
     features = []; % initialize array to store features
-    while n <= numWins
+    while n <= numWins-1
         values = x(firstSample:(firstSample+samplesWin-1)); % determine signal values for window
-
         res = featFn(values,fs);
         features = [features res']; % calculate features for window
 
