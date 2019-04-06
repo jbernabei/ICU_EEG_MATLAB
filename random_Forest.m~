@@ -31,5 +31,5 @@ Precision = sum((Yhat' + Ytest)==2)./sum(Yhat');
 
 Recall = sum((Yhat' + Ytest)==2)./(sum((Yhat' + Ytest)==2) + sum(((Yhat' == 0)+ (Ytest==1))==2));
 
-F1 = 2*Precision*Recall/(Recall + Precision);
+F1 = 1
 

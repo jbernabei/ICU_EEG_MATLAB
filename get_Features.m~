@@ -86,5 +86,5 @@ fcuthigh4=40;   %high cut frequency in kHz
 Entropy = wentropy(values,'shannon');
 
 %% Return vector of features
-feats = [p1 p2 p3 Entropy];
+feats = [p1 p2 p3 avgPSD Entropy];
 end

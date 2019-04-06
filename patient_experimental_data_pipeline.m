@@ -37,7 +37,9 @@ for i = 3:3
         b = b+int_length-1;
     end
     
-    data_with_NaN(i).data = session.data.getvalues(1:(80*60*sampleRate),channels);
+    data_with_NaN(i).data = session.data.getvalues(1:(4*60*60*sampleRate),channels);
+    data_with_NaN(i).data = [data_with_NaN(i).data; session.data.getvalues((4*60*60*sampleRate):(8*60*60*sampleRate),channels)];
+    data_with_NaN(i).data = [data_with_NaN(i).data; session.data.getvalues((8*60*60*sampleRate):(12*60*60*sampleRate),channels)];
     
     sample_counter = 0;
     start_ind{i} = 1;
@@ -62,19 +64,15 @@ for i = 3:3
     chan_Feat = [];
     data_clip(i).data = data_with_NaN(i).data((start_ind{i} + 0.5*sampleRate*60):end - 10*window_Length,:);
     data_clip(i).data = rmmissing(data_clip(i).data);
-    for chan = 1:18
+    for chan = 1:2
         chan
-        if (isempty(chan_Feat))
-            chan_Feat = MovingWinFeats(data_clip(i).data(:,chan), sampleRate, window_Length, window_Disp, @get_Features);
-        end
-        chan_Feat =  chan_Feat + MovingWinFeats(data_clip(i).data(:,chan), sampleRate, window_Length, window_Disp, @get_Features);
+        chan_Feat(chan,:,:) =  MovingWinFeats(data_clip(i).data(:,chan), sampleRate, window_Length, window_Disp, @get_Features);
     end
-    chan_Feat = chan_Feat./18;
-    feats{i} = chan_Feat;
+    feats{i} = [squeeze(median(chan_Feat)); squeeze(var(chan_Feat)); squeeze(mean(chan_Feat))];
     
     labelSeizureVector{i} = zeros([1,size(feats{i},2)]);
     for k = 1:size(labelSeizureVector{i},2)
-        if(sum(intervals_SZ(i).data == (start_ind{i} + window_Disp*k*sampleRate+floor(window_Length/2))) > 0)
+        if(sum(intervals_SZ(i).data == (floor(start_ind{i}./sampleRate) + window_Disp*k+floor(window_Length/2))) > 0)
             labelSeizureVector{i}(k) = 1;
         end
     end
