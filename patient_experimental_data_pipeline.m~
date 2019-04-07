@@ -37,8 +37,17 @@ for i = 3:3
         b = b+int_length-1;
     end
     
-    data_with_NaN(i).data = session.data.getvalues(1:(80*60*sampleRate),channels);
-    
+    durationInSamples = floor(session.data.rawChannels(1).get_tsdetails.getDuration*1e-06*sampleRate);
+    howMuchData = 0;
+    hourCount = 1;
+    data_with_NaN(i).data = [];
+    while (howMuchData < (durationInSamples - 4*60*60*sampleRate))
+        data_with_NaN(i).data = [data_with_NaN(i).data; session.data.getvalues((hourCount*4*60*60*sampleRate):((hourCount+1)*4*60*60*sampleRate),channels)];
+        hourCount = hourCount+1;
+        howMuchData = howMuchData + 4*60*60*sampleRate;
+    end
+    data_with_NaN(i).data = [data_with_NaN(i).data; session.data.getvalues((hourCount*4*60*60*sampleRate):durationInSamples)];
+        
     sample_counter = 0;
     start_ind{i} = 1;
     ind = 1;
@@ -64,66 +73,18 @@ for i = 3:3
     data_clip(i).data = rmmissing(data_clip(i).data);
     for chan = 1:18
         chan
-        if (isempty(chan_Feat))
-            chan_Feat = MovingWinFeats(data_clip(i).data(:,chan), sampleRate, window_Length, window_Disp, @get_Features);
-        end
-        chan_Feat =  chan_Feat + MovingWinFeats(data_clip(i).data(:,chan), sampleRate, window_Length, window_Disp, @get_Features);
+        chan_Feat(chan,:,:) =  MovingWinFeats(data_clip(i).data(:,chan), sampleRate, window_Length, window_Disp, @get_Features);
     end
-    chan_Feat = chan_Feat./18;
-    feats{i} = chan_Feat;
+    feats{i} = [squeeze(median(chan_Feat)); squeeze(var(chan_Feat)); squeeze(mean(chan_Feat))];
     
     labelSeizureVector{i} = zeros([1,size(feats{i},2)]);
     for k = 1:size(labelSeizureVector{i},2)
-        if(sum(intervals_SZ(i).data == (start_ind{i} + window_Disp*k*sampleRate+floor(window_Length/2))) > 0)
+        if(sum(intervals_SZ(i).data == (floor(start_ind{i}./sampleRate) + window_Disp*k+floor(window_Length/2))) > 0)
             labelSeizureVector{i}(k) = 1;
         end
     end
     
 end
-
-%for i = 1:5
-    %session = IEEGSession(all_annots(i).patient, iEEGid, iEEGpw); % Initiate IEEG session
-    %sampleRate = session.data.sampleRate; % Sampling rate
-    %data_clip(i).data = session.data.getvalues(1:(15*60*sampleRate),channels);
-    
-%end
-
-%for i = 1:5
-%     sample_counter = 0;
-%     start_ind{i} = 1;
-%     ind = 1;
-%     found_full_15 = 0;
-%     bad_count = 0;
-%     while (found_full_15 == 0)
-%         sample_counter = sample_counter + 1;
-%         if (sum(isnan(data_with_NaN(i).data(ind,:)))>0)
-%             bad_count = bad_count + sum(isnan(data_with_NaN(i).data(ind,:)));
-%             if (bad_count>32)
-%                 sample_counter = 0;
-%                 start_ind{i} = ind + 1;
-%             end
-%         end
-%         if (sample_counter == 15*60*sampleRate)
-%             found_full_15 = 1;
-%         end
-%         ind = ind + 1;
-%     end
-%end
-%for i = 1:5
-%     data_clip(i).data = data_with_NaN(i).data((start_ind{i} + 0.5*sampleRate*60):(start_ind{i} + 15.5*sampleRate*60),:);
-%     data_clip(i).data = rmmissing(data_clip(i).data);
-%     feats{i} = MovingWinFeats(data_clip(i).data, sampleRate, window_Length, window_Disp, @get_Features);
-%end
-
-% Now we need to generate the labels
-%for i = 1:5
-%     labelSeizureVector{i} = zeros([1,size(feats{i},2)]);
-%     for k = 1:size(labelSeizureVector{i},2)
-%         if(sum(intervals_SZ(i).data == k*sampleRate) > 0)
-%             labelSeizureVector{i}(k) = 1;
-%         end
-%     end
-%end
 
 feats
 labelSeizureVector
