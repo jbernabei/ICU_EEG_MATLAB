@@ -81,10 +81,12 @@ fcuthigh4=40;   %high cut frequency in kHz
 %avgLL = mean(llfn);
 %upperLL = llfn(PSDVector>=(avgLL+sqrt(varLL)));
 %lowerLL = llfn(PSDVector<=(avgLL-sqrt(varLL)));
+LLFn = sum(abs(diff(values)));
+Energy = sum(values.^2);
 
 %% Calculate wavelet entropy
 Entropy = wentropy(values,'shannon');
 
 %% Return vector of features
-feats = [p1 p2 p3 Entropy];
+feats = [p1 p2 p3 Entropy LLFn Energy];
 end
