@@ -12,7 +12,7 @@ window_Disp = 5;
 Num_patients = 1;
 
 %% Get intervals for all patients 
-for i = 6:30
+for i = 25:30
     i
     session = IEEGSession(all_annots(i).patient, iEEGid, iEEGpw); % Initiate IEEG session
     sampleRate = session.data.sampleRate; % Sampling rate
@@ -20,16 +20,16 @@ for i = 6:30
     
     % Get seizure interval times
     a = 0;
-    sz_raw(i).data = [];
+%    sz_raw(i).data = [];
     augmentedlabelSeizureVector(i).data = [];
     for j = 1:sz_num
         a = a+1;
         int_length = length([all_annots(i).sz_start(j):all_annots(i).sz_stop(j)]);
         intervals_SZ(i).data(a:(a+int_length-1)) = [all_annots(i).sz_start(j):all_annots(i).sz_stop(j)];
         a = a+int_length-1;
-        holder = session.data.getvalues((sampleRate*all_annots(i).sz_start(j):sampleRate*all_annots(i).sz_stop(j)),channels);
-        sz_raw(i).data = [(sz_raw(i).data) holder'];
-        augmentedlabelSeizureVector(i).data = [augmentedlabelSeizureVector(i).data zeros([1,floor(size(holder,1)./window_Disp./sampleRate)])+1];
+%        holder = session.data.getvalues((sampleRate*all_annots(i).sz_start(j):sampleRate*all_annots(i).sz_stop(j)),channels);
+%        sz_raw(i).data = [(sz_raw(i).data) holder'];
+%         augmentedlabelSeizureVector(i).data = [augmentedlabelSeizureVector(i).data zeros([1,floor(size(holder,1)./window_Disp./sampleRate)])+1];
     end
     
     % Get interictal interval times, including pre-seizure beginning data
@@ -44,16 +44,18 @@ for i = 6:30
     end
     
     durationInSamples = floor(session.data.rawChannels(1).get_tsdetails.getDuration*1e-06*sampleRate);
-    howMuchData = 0;
+    howMuchData = - 4*60*60*sampleRate - 1;
     hourCount = 0;
     data_with_NaN(i).data = [];
+    draw = 0;
     
-%     while (howMuchData < (durationInSamples - 4*60*60*sampleRate))
-%         data_with_NaN(i).data = [data_with_NaN(i).data; session.data.getvalues((hourCount*4*60*60*sampleRate+1):((hourCount+1)*4*60*60*sampleRate),channels)];
-%         hourCount = hourCount+1;
-%         howMuchData = howMuchData + 4*60*60*sampleRate;
-%     end
-    data_with_NaN(i).data = [session.data.getvalues(1:(100*60*sampleRate+1), channels)];
+    while (howMuchData < (durationInSamples - 4*60*60*sampleRate))
+        draw = draw +1
+        data_with_NaN(i).data = [data_with_NaN(i).data; session.data.getvalues((hourCount*4*60*60*sampleRate+1):((hourCount+1)*4*60*60*sampleRate),channels)];
+        hourCount = hourCount+1;
+        howMuchData = max(howMuchData,0) + 4*60*60*sampleRate;
+    end
+%    data_with_NaN(i).data = [session.data.getvalues(1:(100*60*sampleRate+1), channels)];
         
     sample_counter = 0;
     start_ind{i} = 1;
@@ -78,7 +80,7 @@ for i = 6:30
     chan_Feat = [];
     data_clip(i).data = data_with_NaN(i).data((start_ind{i} + 0.5*sampleRate*60):end - 10*window_Length,:);
     data_clip(i).data = rmmissing(data_clip(i).data);
-    data_clip(i).data = [(sz_raw(i).data)'; data_clip(i).data];
+%    data_clip(i).data = [(sz_raw(i).data)'; data_clip(i).data];
     data_clip(i).data(find(isnan(data_clip(i).data))) = 0;
     for chan = 1:18
         chan
@@ -89,12 +91,16 @@ for i = 6:30
     labelSeizureVector{i} = zeros([1,size(feats{i},2)]);
     windPlacer = 1;
     for k = 1:size(labelSeizureVector{i},2)
-        if(k <= floor(size(holder,1)./window_Disp./sampleRate))
-            labelSeizureVector{i}(k) = 1;
-            windPlacer = windPlacer - 1;
-        elseif(sum(intervals_SZ(i).data == (floor(start_ind{i}./sampleRate) + window_Disp*windPlacer+floor(window_Length/2))) > 0)
+%         if(k <= floor(size(holder,1)./window_Disp./sampleRate))
+%             labelSeizureVector{i}(k) = 1;
+%             windPlacer = windPlacer - 1;
+%         elseif(sum(intervals_SZ(i).data == (floor(start_ind{i}./sampleRate) + window_Disp*windPlacer+floor(window_Length/2))) > 0)
+%             labelSeizureVector{i}(k) = 1;
+%         end
+        if(sum(intervals_SZ(i).data == (floor(start_ind{i}./sampleRate) + window_Disp*windPlacer+floor(window_Length/2))) > 0)
             labelSeizureVector{i}(k) = 1;
         end
+
         windPlacer = windPlacer + 1;
     end
 end
