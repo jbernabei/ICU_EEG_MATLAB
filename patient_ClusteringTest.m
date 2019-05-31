@@ -1,4 +1,4 @@
-function [F1, Precision, Recall, IsolateInstances] = patient_ClusteringTest(patientFeats, patientLabels, ModelArray)
+function [F1, Precision, Recall, IsolateInstances, Yhat] = patient_ClusteringTest(patientFeats, patientLabels, ModelArray)
 
 clustQuantity = 7;
 [idx] = Data2Cluster(patientFeats,clustQuantity, false);

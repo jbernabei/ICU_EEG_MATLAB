@@ -12,7 +12,7 @@ window_Disp = 5;
 Num_patients = 1;
 
 %% Get intervals for all patients 
-for i = 25:30
+for i = 31:32
     i
     session = IEEGSession(all_annots(i).patient, iEEGid, iEEGpw); % Initiate IEEG session
     sampleRate = session.data.sampleRate; % Sampling rate

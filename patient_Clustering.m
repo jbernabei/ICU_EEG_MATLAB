@@ -10,18 +10,6 @@ Recall_Vec = [];
 patient_in_quant = [];
 IsolateInstanceCount = [];
 
-other_indx = 0;
-
-for i = 1:clustQuantity
-    if(sum(idx==i)<3)
-        if(other_indx ~= 0)
-            idx(find(idx==i)) = other_indx;
-        else
-            other_indx = i;
-        end
-    end
-end
-
 ModelArray{1}.data = [];
 
 for cluster = 1:clustQuantity
@@ -47,7 +35,7 @@ for cluster = 1:clustQuantity
             clusterLabels{counter} = patientLabels{patient};
         end
     end
-    cut = 0.05;
+    cut = 0.02;
     [F1, Precision, Recall, IsolateInstances, Mdl] = random_Forest(clusterData, clusterLabels, counter, cut);
     F1_Vec = [F1_Vec; F1];
     Precision_Vec = [Precision_Vec; Precision];
