@@ -14,18 +14,18 @@ Many more methods are used for smaller tasks derivative of the above, and so a l
 
 ## Essential Scripts/Functions
 
-As mentioned above you will want to begin with these highest level scripts/functions: 
+As mentioned above you will want to begin with these highest level scripts/functions in the "experiments" folder: 
 - patient_clustering_pipeline.m
 - ExperimentWorkbench.m
 - FigureWorkbench.m
 
-On the high-level essential path fo understanding what this code is doing lie:
+On the high-level essential path fo understanding what this project is attempting, look in the "utils" folder for:
 - patient_Clustering.m
 - patient_ClusteringTest.m
 - Data2Cluster.m
 - get_Features.m
 
-Less critical to understanding what's interesting about this approach are:
+In the same folder and worth looking at, but less critical to understanding what's interesting about this approach are:
 - random_Forest.m
 - VoteFiltering.m
 - RemoveStatic.m
