@@ -1,6 +1,6 @@
 # Patient Non-Specific Seizure Detection in the Intensive Care Unit
 
-This is the code accompanying a Spring/Summer 2019 project by Chris Painter and John Bernebei at the University of Pennsylvania's Center for Neuroengineering and Therapeutics that seeks to train a cross-patient seizure detector for use in the intensive Care Unit.
+This is the code accompanying a Spring/Summer 2019 project by Chris Painter and John Bernebei at the University of Pennsylvania's Center for Neuroengineering and Therapeutics that seeks to train a cross-patient seizure detector for use in the intensive care unit.
 
 ## Workflow
 
