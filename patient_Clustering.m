@@ -1,7 +1,15 @@
+%This method takes in the full training set of patients, uses Data2Cluster
+%to find their clusters, trains cluster-specific random forest classifiers
+%for each cluster using the random_Forest function, and then returns a
+%ModelArray of trained classifiers for each cluster, as well as the
+%quantity of patients in each training cluster, among other things.
+
 function [ModelArray, Precision_Vec, Recall_Vec, patient_in_quant, IsolateInstanceCount] = patient_Clustering(patientFeats, patientLabels)
 
 clustQuantity = 7;
 
+%This executes the cluster training process described much more thoroughly
+%in Data2Cluster.
 [idx] = Data2Cluster(patientFeats,clustQuantity, true);
 
 F1_Vec = [];
@@ -14,6 +22,9 @@ ModelArray{1}.data = [];
 
 for cluster = 1:clustQuantity
     if (sum(idx==cluster)==0)
+        
+        %Below is the recording of summary information, like the number of
+        %patients in a given new cluster, that will be reported at the end.
         F1_Vec = [F1_Vec; NaN];
         Precision_Vec = [Precision_Vec; NaN];
         Recall_Vec = [Recall_Vec; NaN];

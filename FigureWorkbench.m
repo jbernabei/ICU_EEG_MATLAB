@@ -1,3 +1,5 @@
+%This code generates instances of the figure types used in the project.
+
 hold on
 generic_time_vec = 1/(60*6)*[1:1:size(Ysmooth)];
 goldTimes = generic_time_vec(find(TestLabels{index(i)}));

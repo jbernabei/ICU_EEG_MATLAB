@@ -1,4 +1,6 @@
 
+% WARNING: This file is deprecated in favor of "patient_clustering_pipeline".
+
 %% Set up workspace
 clear all; % Clear all data structures
 load all_annots_32.mat; % Annotations from all patients marked on portal
