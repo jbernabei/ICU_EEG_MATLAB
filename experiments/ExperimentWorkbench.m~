@@ -68,14 +68,12 @@ end
 %features used for clustering is stored as a persistent variable. See
 %Data2Cluster.m for details. The inde
 
-Num_Clusters = 7;
-
-Data2Cluster(UnAnnotatedFeats, Num_Clusters, true)
+Data2Cluster(Unlabel, Num_Clusters, train)
 
 %Supervised Training. The training set of patients is clustered, and cluster-specific classifier
 %are trained on each cluster.
 
-[ModelArray, Precision_Vec, Recall_Vec, patient_in_quant, IsolateInstanceCount] = patient_Clustering(TrainFeats, TrainLabels, Num_Clusters)
+[ModelArray, Precision_Vec, Recall_Vec, patient_in_quant, IsolateInstanceCount] = patient_Clustering(TrainFeats, TrainLabels)
 
 
 %%Testing
@@ -97,7 +95,7 @@ for i = 1:TestSize
 %distribution) and then have their cluster-specific applied to make
 %predictions for them. The results of this classification are compared
 %against the true labels provided.
-[F1, Precision, Recall, IsolateInstances, Yhat] = patient_ClusteringTest(TestFeats{index(i)}, TestLabels{index(i)}, ModelArray, Num_Clusters);
+[F1, Precision, Recall, IsolateInstances, Yhat] = patient_ClusteringTest(TestFeats{index(i)}, TestLabels{index(i)}, ModelArray);
 
 %Vote filtering is applied, which is the method of smoothing out
 %window-wise classifications described in "VoteFiltering.m".

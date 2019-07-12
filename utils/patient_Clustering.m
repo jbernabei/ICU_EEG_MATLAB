@@ -4,9 +4,7 @@
 %ModelArray of trained classifiers for each cluster, as well as the
 %quantity of patients in each training cluster, among other things.
 
-function [ModelArray, Precision_Vec, Recall_Vec, patient_in_quant, IsolateInstanceCount] = patient_Clustering(patientFeats, patientLabels)
-
-clustQuantity = 7;
+function [ModelArray, Precision_Vec, Recall_Vec, patient_in_quant, IsolateInstanceCount] = patient_Clustering(patientFeats, patientLabels, clustQuantity)
 
 %This executes the cluster training process described much more thoroughly
 %in Data2Cluster.

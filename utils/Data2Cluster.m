@@ -2,10 +2,10 @@
 %of patient training data and generate k-means clusters for those patients
 %that it then stores in persistent variables, and it can take additional
 %patients, with a "train=FALSE" input, and find which of the training set
-%clusters that patient belongs in. It CANNOT update training set clusters
-%with additional patients (if this was attempted the function would simply
-%calculate new training set clusters from scratch) but this feature should
-%be added.
+%clusters that patient belongs in. It also can take data with no
+%annotations, since annotations aren't dealt with anywhere in the script.
+%To add patients to enhance clustering, simply leave the "train" tag as
+%"true".
 
 function [idx] = Data2Cluster(patientFeats, Num_Clusters, train)
 

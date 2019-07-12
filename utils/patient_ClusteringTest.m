@@ -6,13 +6,12 @@
 %deals largely with persistent variables, and thus has implicitly been run
 %on training data before this function is called.
 
-function [F1, Precision, Recall, IsolateInstances, Yhat] = patient_ClusteringTest(patientFeats, patientLabels, ModelArray)
+function [F1, Precision, Recall, IsolateInstances, Yhat] = patient_ClusteringTest(patientFeats, patientLabels, ModelArray, clustQuantity)
 
 %The third input to Data2Cluster here proscribes whether or not the patient
 %that's being put into Data2Cluster should affect the cluster definitions.
 %We set this to false, because we want the test patient to be sorted into
 %the pre-existing clusters.
-clustQuantity = 7;
 [idx] = Data2Cluster(patientFeats,clustQuantity, false);
 
 %The relevant cluster-specific classifier is accessed in ModelArray

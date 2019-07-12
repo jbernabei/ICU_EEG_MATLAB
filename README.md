@@ -15,7 +15,8 @@ Many more methods are used for smaller tasks derivative of the above, and so a l
 ## Essential Scripts/Functions
 
 As mentioned above you will want to begin with these highest level scripts/functions in the "experiments" folder: 
-- patient_clustering_pipeline.m
+- labeled_data_preprocessing.m
+- unlabeled_data_preprocessing.m
 - ExperimentWorkbench.m
 - FigureWorkbench.m
 
