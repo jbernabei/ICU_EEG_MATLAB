@@ -9,11 +9,15 @@ num_patients = size(all_annots,2); % Get number of patients
 
 window_Length = 10;
 window_Disp = 5;
-Num_patients = 1;
+first_patient = 0;
+last_patient = 0;
 
 %% Get intervals for all patients 
-for i = 31:32
+for i = first_patient:last_patient
     i
+    
+    % Connect to the IEEG session, and find the number of seizures on the
+    % associated dataset.
     session = IEEGSession(all_annots(i).patient, iEEGid, iEEGpw); % Initiate IEEG session
     sampleRate = session.data.sampleRate; % Sampling rate
     sz_num = length(all_annots(i).sz_start); % Get number of seizures
@@ -39,6 +43,12 @@ for i = 31:32
         b = b+int_length-1;
     end
     
+    % In this section, we find the duration of the dataset in terms of
+    % number of samples, then we establish that we'd like to pull 4 hours
+    % of data from the portal per call. We then make repeated calls to the
+    % portal until there is less than one call of 4 hour's worth of data
+    % left. This leaves a bit of data left on the table, and could be
+    % changed, but there is some overhead in making calls to the portal.
     durationInSamples = floor(session.data.rawChannels(1).get_tsdetails.getDuration*1e-06*sampleRate);
     howMuchData = - 4*60*60*sampleRate - 1;
     hourCount = 0;
@@ -52,6 +62,10 @@ for i = 31:32
         howMuchData = max(howMuchData,0) + 4*60*60*sampleRate;
     end
         
+    % Here we remove data from consideration until there is 15 minutes
+    % worth of continuous non-NaN data for all channels in the patient. This is a form
+    % of obvious artifact rejection, as some ICU sessions take a few
+    % minutes for electrodes to correctly connected to the patient's scalp.
     sample_counter = 0;
     start_ind{i} = 1;
     ind = 1;
