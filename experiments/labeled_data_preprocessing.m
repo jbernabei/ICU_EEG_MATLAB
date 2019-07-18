@@ -1,20 +1,31 @@
 
 %% Set up workspace
 clear all; % Clear all data structures
-load all_annots_32.mat; % Annotations from all patients marked on portal
-iEEGid = 'cpainter'; % Change this for different user
-iEEGpw = 'cpa_ieeglogin.bin'; % Change this for different user
-channels = [3 4 5 9 10 11 12 13 14 20 21 23 24 27 31 32 33 34];
+load all_annots_131.mat; % Annotations from all patients marked on portal
+iEEGid = 'jbernabei'; % Change this for different user
+iEEGpw = 'jbe_ieeglogin.bin'; % Change this for different user
+
+% Later patients have different extraneous channel labels on ieeg.org so 
+% they require a different vector to select channels, however the same 
+% location and number of true channels used in analysis is the same
+channels_original_patients = [3 4 5 9 10 11 12 13 14 16 20 21 23 24 27 31 32 33 34];
+channels_new_patients = [1 2 3 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20];
 num_patients = size(all_annots,2); % Get number of patients
 
 window_Length = 10;
 window_Disp = 5;
-first_patient = 0;
-last_patient = 0;
+first_patient = 1;
+last_patient = 131;
 
 %% Get intervals for all patients 
 for i = first_patient:last_patient
     i
+    % Select channel indices based on which patient we are using
+    if i<33
+        channels = channels_original_patients; %all patients with 'RID' ID on portal
+    else
+        channels = channels_new_patients; %all patients with 'CNT' ID on portal
+    end
     
     % Connect to the IEEG session, and find the number of seizures on the
     % associated dataset.
@@ -22,25 +33,29 @@ for i = first_patient:last_patient
     sampleRate = session.data.sampleRate; % Sampling rate
     sz_num = length(all_annots(i).sz_start); % Get number of seizures
     
-    % Get seizure interval times
-    a = 0;
-    augmentedlabelSeizureVector(i).data = [];
-    for j = 1:sz_num
-        a = a+1;
-        int_length = length([all_annots(i).sz_start(j):all_annots(i).sz_stop(j)]);
-        intervals_SZ(i).data(a:(a+int_length-1)) = [all_annots(i).sz_start(j):all_annots(i).sz_stop(j)];
-        a = a+int_length-1;
-    end
-    
-    % Get interictal interval times, including pre-seizure beginning data
-    b = 1;
-    int_length = length([1:all_annots(i).sz_start(1)]);
-    intervals_II(i).data(b:(b+int_length-1)) = [1:all_annots(i).sz_start(1)];
-    for j = 1:(sz_num-1)
-        b = b+1;
-        int_length = length([all_annots(i).sz_stop(j):all_annots(i).sz_start(j+1)]);
-        intervals_II(i).data(b:(b+int_length-1)) = [all_annots(i).sz_stop(j):all_annots(i).sz_start(j+1)];
-        b = b+int_length-1;
+    if i<33
+        % Get seizure interval times
+        a = 0;
+        augmentedlabelSeizureVector(i).data = [];
+        for j = 1:sz_num
+            a = a+1;
+            int_length = length([all_annots(i).sz_start(j):all_annots(i).sz_stop(j)]);
+            intervals_SZ(i).data(a:(a+int_length-1)) = [all_annots(i).sz_start(j):all_annots(i).sz_stop(j)];
+            a = a+int_length-1;
+        end
+
+        % Get interictal interval times, including pre-seizure beginning data
+        b = 1;
+        int_length = length([1:all_annots(i).sz_start(1)]);
+        intervals_II(i).data(b:(b+int_length-1)) = [1:all_annots(i).sz_start(1)];
+        for j = 1:(sz_num-1)
+            b = b+1;
+            int_length = length([all_annots(i).sz_stop(j):all_annots(i).sz_start(j+1)]);
+            intervals_II(i).data(b:(b+int_length-1)) = [all_annots(i).sz_stop(j):all_annots(i).sz_start(j+1)];
+            b = b+int_length-1;
+        end
+    else
+        intervals_II(i).data = (1:(session.data.rawChannels(1).get_tsdetails.getDuration*1e-06));
     end
     
     % In this section, we find the duration of the dataset in terms of
