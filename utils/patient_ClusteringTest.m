@@ -6,19 +6,27 @@
 %deals largely with persistent variables, and thus has implicitly been run
 %on training data before this function is called.
 
-function [F1, Precision, Recall, IsolateInstances, Yhat] = patient_ClusteringTest(patientFeats, patientLabels, ModelArray, clustQuantity)
+function [F1, Precision, Recall, IsolateInstances, Yhat, idx, score_vals] = patient_ClusteringTest(patientFeats, patientLabels, ModelArray, FeatureMeans,FeatureVars,Centroids)
 
 %The third input to Data2Cluster here proscribes whether or not the patient
 %that's being put into Data2Cluster should affect the cluster definitions.
 %We set this to false, because we want the test patient to be sorted into
 %the pre-existing clusters.
-[idx] = Data2Cluster(patientFeats,clustQuantity, false);
+clear idx
+[idx] = Data2Cluster(patientFeats,FeatureMeans,FeatureVars,Centroids);
 
 %The relevant cluster-specific classifier is accessed in ModelArray
-Mdl = ModelArray{idx};
+Mdl = ModelArray{idx}
+
+if isempty(Mdl)
+    for i = 1:length(ModelArray)
+        modelabsence(i) = isempty(ModelArray{i});
+    end
+    Mdl = ModelArray{min(find(modelabsence==0))};
+end
 
 %Predictions are generated
-Yguess_cell = Mdl.predict(patientFeats');
+[Yguess_cell, score_vals] = predict(Mdl,patientFeats');
 
 Yhat = str2num(cell2mat(Yguess_cell));
 
@@ -35,9 +43,6 @@ Precision = sum((Yhat' + patientLabels)==2)./sum(Yhat');
 Recall = sum((Yhat' + patientLabels)==2)./(sum((Yhat' + patientLabels)==2) + sum(((Yhat' == 0)+ (patientLabels==1))==2));
 
 F1 = 2*Precision*Recall/(Recall + Precision);
-
-
-
 
 
 
