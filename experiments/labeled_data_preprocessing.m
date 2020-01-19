@@ -1,30 +1,32 @@
 
 %% Set up workspace
 clear all; % Clear all data structures
-load all_annots_131.mat; % Annotations from all patients marked on portal
+load all_annots_91.mat; % Annotations from all patients marked on portal
 iEEGid = 'jbernabei'; % Change this for different user
 iEEGpw = 'jbe_ieeglogin.bin'; % Change this for different user
 
-% Later patients have different extraneous channel labels on ieeg.org so 
-% they require a different vector to select channels, however the same 
-% location and number of true channels used in analysis is the same
-channels_original_patients = [3 4 5 9 10 11 12 13 14 16 20 21 23 24 27 31 32 33 34];
-channels_new_patients = [1 2 3 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20];
+% Set up channels
+channels_original_patients = [3 4 5 9 10 11 12 13 14 16 20 21 23 24 31 32 33 34];
+ekg_channels = [7,8];
 num_patients = size(all_annots,2); % Get number of patients
 
 window_Length = 10;
 window_Disp = 5;
-first_patient = 1;
-last_patient = 131;
+pt_list = [1];
 
-%% Get intervals for all patients 
-for i = first_patient:last_patient
-    i
+%% Get data for all specified patients
+for i = pt_list
+    fprintf('Processing patient %s ',all_annots(i).patient)
     % Select channel indices based on which patient we are using
-    if i<33
+    if i == 17
+        channels = channel_17_patient; %all patients with 'RID' ID on portal
+        fprintf('in which there are %d seizures\n',length(all_annots(i).sz_start))
+    elseif ~isempty(all_annots(i).sz_start)
         channels = channels_original_patients; %all patients with 'RID' ID on portal
+        fprintf('in which there are %d seizures\n',length(all_annots(i).sz_start))
     else
         channels = channels_new_patients; %all patients with 'CNT' ID on portal
+        fprintf('in which there are no seizures\n')
     end
     
     % Connect to the IEEG session, and find the number of seizures on the
@@ -32,8 +34,15 @@ for i = first_patient:last_patient
     session = IEEGSession(all_annots(i).patient, iEEGid, iEEGpw); % Initiate IEEG session
     sampleRate = session.data.sampleRate; % Sampling rate
     sz_num = length(all_annots(i).sz_start); % Get number of seizures
+    dataset_length = session.data.rawChannels(1).get_tsdetails.getDuration*1e-06;
     
-    if i<33
+    % Get a vector of all times from 1 to the total number of seconds in
+    % the recording
+    all_intervals = [1:(dataset_length)];
+    
+    % Create patient-specific vectors of all times that contain seizures,
+    % skipping this step if the patient is seizure free
+    if ~isempty(all_annots(i).sz_start)
         % Get seizure interval times
         a = 0;
         augmentedlabelSeizureVector(i).data = [];
@@ -45,18 +54,16 @@ for i = first_patient:last_patient
         end
 
         % Get interictal interval times, including pre-seizure beginning data
-        b = 1;
         int_length = length([1:all_annots(i).sz_start(1)]);
-        intervals_II(i).data(b:(b+int_length-1)) = [1:all_annots(i).sz_start(1)];
-        for j = 1:(sz_num-1)
-            b = b+1;
-            int_length = length([all_annots(i).sz_stop(j):all_annots(i).sz_start(j+1)]);
-            intervals_II(i).data(b:(b+int_length-1)) = [all_annots(i).sz_stop(j):all_annots(i).sz_start(j+1)];
-            b = b+int_length-1;
-        end
+        intervals_II(i).data = setdiff(all_intervals,intervals_SZ(i).data);
+        fprintf('There are %d seconds worth of seizures in this patient\n',length(intervals_SZ(i).data))
     else
-        intervals_II(i).data = (1:(session.data.rawChannels(1).get_tsdetails.getDuration*1e-06));
+        % If the patient is seizure free the 'interictal' intervals are
+        % simply that of the entire recording
+        intervals_II(i).data = all_intervals;
     end
+    fprintf('There are %d seconds worth of non-seizure data in this patient\n',length(intervals_II(i).data))
+    
     
     % In this section, we find the duration of the dataset in terms of
     % number of samples, then we establish that we'd like to pull 4 hours
@@ -65,67 +72,122 @@ for i = first_patient:last_patient
     % left. This leaves a bit of data left on the table, and could be
     % changed, but there is some overhead in making calls to the portal.
     durationInSamples = floor(session.data.rawChannels(1).get_tsdetails.getDuration*1e-06*sampleRate);
-    howMuchData = - 4*60*60*sampleRate - 1;
+    chunk_size = 1;
+    howMuchData = - chunk_size*60*60*sampleRate - 1;
     hourCount = 0;
     data_with_NaN(i).data = [];
+    data_with_NaN(i).times = [];
     draw = 0;
+    enough_data = 0;
+    max_hours = 24;
     
-    while (howMuchData < (durationInSamples - 4*60*60*sampleRate))
-        draw = draw +1
-        data_with_NaN(i).data = [data_with_NaN(i).data; session.data.getvalues((hourCount*4*60*60*sampleRate+1):((hourCount+1)*4*60*60*sampleRate),channels)];
-        hourCount = hourCount+1;
-        howMuchData = max(howMuchData,0) + 4*60*60*sampleRate;
-    end
+    % Get full data for SZ patients but only partial data for SZ free
+    % patients
+    while (howMuchData < (durationInSamples - chunk_size*60*60*sampleRate)) && enough_data ==0
+        draw = draw +1; % Update how many draws are being made from the data
+        fprintf('Acquiring block %d of length %d hours\n',draw,chunk_size)
+        % Check if greater than 8 hours of data are being pulled
+        if ((draw*chunk_size)>=max_hours)
+            enough_data = 1;
+        end
         
-    % Here we remove data from consideration until there is 15 minutes
-    % worth of continuous non-NaN data for all channels in the patient. This is a form
-    % of obvious artifact rejection, as some ICU sessions take a few
-    % minutes for electrodes to correctly connected to the patient's scalp.
-    sample_counter = 0;
-    start_ind{i} = 1;
-    ind = 1;
-    found_full_15 = 0;
-    bad_count = 0;
-    while (found_full_15 == 0)
-        sample_counter = sample_counter + 1;
-        if (sum(isnan(data_with_NaN(i).data(ind,:)))>0)
-            bad_count = bad_count + sum(isnan(data_with_NaN(i).data(ind,:)));
-            if (bad_count>32)
-                sample_counter = 0;
-                start_ind{i} = ind + 1;
-            end
-        end
-        if (sample_counter == 15*60*sampleRate)
-            found_full_15 = 1;
-        end
-        ind = ind + 1;
+        data_with_NaN(i).data = [data_with_NaN(i).data; session.data.getvalues((hourCount*chunk_size*60*60*sampleRate+1):((hourCount+1)*chunk_size*60*60*sampleRate),channels)];
+        data_with_NaN(i).times = [data_with_NaN(i).times, (hourCount*chunk_size*60*60+1/sampleRate):1/sampleRate:((hourCount+1)*chunk_size*60*60)];
+        
+        hourCount = hourCount+1;
+        howMuchData = max(howMuchData,0) + chunk_size*60*60*sampleRate;
     end
     
-    chan_Feat = [];
-    data_clip(i).data = data_with_NaN(i).data((start_ind{i} + 0.5*sampleRate*60):end - 10*window_Length,:);
-    data_clip(i).data = rmmissing(data_clip(i).data);
-    data_clip(i).data(find(isnan(data_clip(i).data))) = 0;
-    for chan = 1:18
-        chan
-        chan_Feat(chan,:,:) =  MovingWinFeats(data_clip(i).data(:,chan), sampleRate, window_Length, window_Disp, @get_Features);
-    end
-    feats{i} = [squeeze(median(chan_Feat)); squeeze(var(chan_Feat)); squeeze(mean(chan_Feat))];
+    fprintf('Pulled a total of %d hours of data\n',(howMuchData./(60*60*sampleRate)))
+    fprintf('The raw data matrix has a size of %d by %d\n',size(data_with_NaN(i).data,1),size(data_with_NaN(i).data,2))
+    fprintf('The raw time matrix has a size of %d by %d\n',size(data_with_NaN(i).times,1),size(data_with_NaN(i).times,2))
     
-    labelSeizureVector{i} = zeros([1,size(feats{i},2)]);
-    windPlacer = 1;
-    for k = 1:size(labelSeizureVector{i},2)
-        if(sum(intervals_SZ(i).data == (floor(start_ind{i}./sampleRate) + window_Disp*windPlacer+floor(window_Length/2))) > 0)
-            labelSeizureVector{i}(k) = 1;
-        end
 
-        windPlacer = windPlacer + 1;
+    % Establish feature vector
+    data_clip(i).labels = zeros(max(size(data_with_NaN(i).data)),1);
+    
+    % Assign seizure intervals 
+    if ~isempty(all_annots(i).sz_start)
+        % Find overlap of data with seizure intervals to assign labels
+        % correctly
+        [IB] = find(ismember(floor(data_with_NaN(i).times),(intervals_SZ(i).data))==1);
+        data_clip(i).labels(IB) = 1;
     end
+
+    % Remove NaNs from data
+    [placeholder_data, indices] = rmmissing(data_with_NaN(i).data);
+    data_clip(i).data = placeholder_data;
+    if sum(data_clip(i).labels(indices))>0
+         fprintf('WARNING: Seizure was incorrectly recognized as artifact! (from NaNs)\n')
+    end
+    data_clip(i).labels(indices) = []; % remove indices from labels for which data has NaNs
+    data_clip(i).data(find(isnan(data_clip(i).data))) = 0;
+    
+    fprintf('After removing NaNs:\n')
+    fprintf('The raw data matrix has a size of %d by %d\n',size(data_clip(i).data,1),size(data_clip(i).data,2))
+    fprintf('The label matrix has a size of %d by %d\n',size(data_clip(i).labels,1),size(data_clip(i).labels,2))
+    
+    % Use moving window function to calculate features
+    [chan_Feat,num_removed, processed_labels] =  moving_Window(data_clip(i).data, sampleRate, window_Length, window_Disp, data_clip(i).labels);
+    fprintf('Removed %d sub-windows because z score was > 6\n',num_removed)
+    feats{i} = chan_Feat;
+    labelSeizureVector{i} = processed_labels;
+    
+    fprintf('After calculating features:\n')
+    fprintf('The feature matrix has a size of %d by %d\n',size(chan_Feat,1),size(chan_Feat,2))
+    fprintf('The label matrix has a size of %d by %d\n',size(processed_labels,1),size(processed_labels,2))
+    
+%     labelSeizureVector{i} = zeros([1,size(feats{i},2)]);
+%     windPlacer = 1;
+%     if i<33
+%     for k = 1:size(labelSeizureVector{i},2)
+%         if(sum(intervals_SZ(i).data == (floor(start_ind{i}./sampleRate) + window_Disp*windPlacer+floor(window_Length/2))) > 0)
+%             labelSeizureVector{i}(k) = 1;
+%         end
+% 
+%         windPlacer = windPlacer + 1;
+%     end
+%     end
+
+
+    figure(i);clf;
+    subplot(3,4,1)
+    plot(chan_Feat(1,:),'ko')
+    title('Delta power')
+    subplot(3,4,2)
+    plot(chan_Feat(2,:),'ko')
+    title('Theta power')
+    subplot(3,4,3)
+    plot(chan_Feat(3,:),'ko')
+    title('Alpha power')
+    subplot(3,4,4)
+    plot(chan_Feat(4,:),'ko')
+    title('Beta power')
+    subplot(3,4,5)
+    plot(chan_Feat(5,:),'ko')
+    title('Line length')
+    subplot(3,4,6) 
+    plot(chan_Feat(6,:),'ko')
+    title('Signal envelope')
+    subplot(3,4,7)
+    plot(chan_Feat(7,:),'ko')
+    title('Skewness')
+    subplot(3,4,8) 
+    plot(chan_Feat(8,:),'ko')
+    title('Kurtosis')
+    subplot(3,4,9)
+    plot(chan_Feat(9,:),'ko')
+    title('Synch')
+    subplot(3,4,10) 
+    plot(processed_labels,'ko')
+    title('Label')
 end
 
-feats
-labelSeizureVector
+feats;
+labelSeizureVector;
 
-
+%save(sprintf('feats_%d_%d.mat',first_patient,last_patient),'feats')
+%save(sprintf('labels_%d_%d.mat',first_patient,last_patient),'labelSeizureVector')
 
 
 

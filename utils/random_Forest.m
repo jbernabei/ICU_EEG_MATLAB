@@ -1,4 +1,4 @@
-function [F1, Precision, Recall, IsolateInstances, Mdl] = random_Forest(MyHugeFeats, MyHugeLabels, Num_patients,testCut)
+function [F1, Precision, Recall, IsolateInstances, Mdl, score_vals] = random_Forest(MyHugeFeats, MyHugeLabels, Num_patients,testCut)
 
 X = [];
 Y = [];
@@ -13,6 +13,12 @@ backup = Y;
 
 indices = randsample(size(X,2),floor(size(X,2)*testCut),false);
 
+% size(X)
+% 
+% [COEFF, SCORE, LATENT, TSQUARED, EXPLAINED, MU] = pca(X');
+% EXPLAINED
+% X = SCORE(:,1:2)';
+
 Xtest = X(:,indices);
 Ytest = Y(indices);
 Xtrain = X;
@@ -20,9 +26,14 @@ Ytrain = Y;
 Xtrain(:,indices) = [];
 Ytrain(indices) = [];
 
-Mdl = TreeBagger(300,Xtrain',Ytrain, 'Cost',[0 0.001; 0.999, 0]);
+ClassNames = [0,1];
 
-Yguess_cell = Mdl.predict(Xtest');
+cost.ClassNames = ClassNames;
+cost.ClassificationCosts = [0 1; 1000 0];
+
+Mdl = TreeBagger(300,Xtrain',Ytrain,'cost',cost);
+
+[Yguess_cell,score_vals] = predict(Mdl,Xtest');
 
 Yhat = str2num(cell2mat(Yguess_cell));
 

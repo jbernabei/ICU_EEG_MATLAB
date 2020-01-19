@@ -4,11 +4,12 @@
 %ModelArray of trained classifiers for each cluster, as well as the
 %quantity of patients in each training cluster, among other things.
 
-function [ModelArray, Precision_Vec, Recall_Vec, patient_in_quant, IsolateInstanceCount] = patient_Clustering(patientFeats, patientLabels, clustQuantity)
+function [ModelArray, Precision_Vec, Recall_Vec, patient_in_quant, IsolateInstanceCount, idx,sampleStack,FeatureMeans,FeatureVars,Centroids] = patient_Clustering(patientFeats, patientLabels, clustQuantity)
 
 %This executes the cluster training process described much more thoroughly
 %in Data2Cluster.
-[idx] = Data2Cluster(patientFeats,clustQuantity, true);
+clear idx
+[idx, sampleStack,FeatureMeans,FeatureVars,Centroids] = Data2Cluster_train(patientFeats,clustQuantity);
 
 F1_Vec = [];
 Precision_Vec = [];
@@ -31,8 +32,8 @@ for cluster = 1:clustQuantity
         ModelArray{cluster} = [];
         continue
     end
-    clusterData{1}.data = [];
-    clusterLabels{1}.data = [];
+    clusterData{1} = [];
+    clusterLabels{1} = [];
     counter = 0;
     for patient = 1:size(patientFeats,2)
         if isempty(patientFeats{patient})
@@ -52,7 +53,6 @@ for cluster = 1:clustQuantity
     patient_in_quant = [patient_in_quant; counter];
     IsolateInstanceCount = [IsolateInstanceCount; IsolateInstances];
     ModelArray{cluster} = Mdl;
-    clear clusterData clusterLabels
 end
 
 end
