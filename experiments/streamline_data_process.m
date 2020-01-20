@@ -1,13 +1,12 @@
 
 %% Set up workspace
 clear all; % Clear all data structures
-load all_annots_91.mat; % Annotations from all patients marked on portal
+load all_annots.mat; % Annotations from all patients marked on portal
 iEEGid = 'jbernabei'; % Change this for different user
 iEEGpw = 'jbe_ieeglogin.bin'; % Change this for different user
 
 % Set up channels
 channels_original_patients = [3 4 5 9 10 11 12 13 14 16 20 21 23 24 31 32 33 34];
-% ekg_channels = [7,8]; % might use this eventually
 num_patients = size(all_annots,2); % Get number of patients
 
 window_Length = 5; % 5 second windows
@@ -129,9 +128,8 @@ for i = pt_list
     
     
     % Use moving window function to calculate features
-    [chan_Feat,num_removed, processed_labels] =  moving_Window_streamline(data_clip(i).data, sampleRate, window_Length, window_Disp, data_clip(i).labels);
+    [chan_Feat, num_removed, processed_labels] =  moving_Window(data_clip(i).data, sampleRate, window_Length, data_clip(i).labels);
     
-    fprintf('Removed %d sub-windows because z score was > 6\n',num_removed)
     feats{i} = chan_Feat;
     labelSeizureVector{i} = processed_labels;
     
@@ -142,37 +140,14 @@ for i = pt_list
     
     
     
-    figure(i);clf;
-    subplot(3,4,1)
-    plot(chan_Feat(1,:),'ko')
-    title('Delta power')
-    subplot(3,4,2)
-    plot(chan_Feat(2,:),'ko')
-    title('Theta power')
-    subplot(3,4,3)
-    plot(chan_Feat(3,:),'ko')
-    title('Alpha power')
-    subplot(3,4,4)
-    plot(chan_Feat(4,:),'ko')
-    title('Beta power')
-    subplot(3,4,5)
-    plot(chan_Feat(5,:),'ko')
-    title('Line length')
-    subplot(3,4,6) 
-    plot(chan_Feat(6,:),'ko')
-    title('Signal envelope')
-    subplot(3,4,7)
-    plot(chan_Feat(7,:),'ko')
-    title('Skewness')
-    subplot(3,4,8) 
-    plot(chan_Feat(8,:),'ko')
-    title('Kurtosis')
-    subplot(3,4,9)
-    plot(chan_Feat(9,:),'ko')
-    title('Synch')
-    subplot(3,4,10) 
+    figure(2*(i-1)+1);clf;
+    for g = 1:16
+        subplot(4,4,g)
+        plot(chan_Feat(g,:),'ko')
+    end
+    figure(2*i);clf;
     plot(processed_labels,'ko')
-    title('Label')
+
 end
 
 feats;
