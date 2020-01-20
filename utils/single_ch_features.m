@@ -66,9 +66,6 @@ Skew = skewness(vals);
 % Kurtosis
 Kurt = kurtosis(vals);
 
-% Correlation_Matrix
-Synch = nanmedian(corrcoef(vals));
-
 % Return vector of features
-feats = [p_delta p_theta p_alpha p_beta Line_length upper_env Skew Kurt Synch];
+feats = [p_delta p_theta p_alpha p_beta Line_length upper_env Skew Kurt];
 end
